@@ -43,15 +43,15 @@ class SignUp(APIView):
         try:
             ser = SignUpSerializer(data=request.data)
             if not ser.is_valid():
-                return Response({"message": "مقادیر ایمیل یا پسورد قابل قبول نیست", "detail": f"مقادیر نادرست برای: {' ,'.join(ser.errors)}"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"message": "invalid data", "detail": f"invalid date for: {' ,'.join(ser.errors)}"}, status=status.HTTP_400_BAD_REQUEST)
             email = request.data.get('email')
             username = request.data.get('username')
             password = request.data.get('password')
 
             if User.objects.filter(email=email).exists():
-                return Response({"message": "این ایمیل قبلا ثبت شده"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"message": "email is already exist"}, status=status.HTTP_406_NOT_ACCEPTABLE)
             if User.objects.filter(username=username).exists():
-                return Response({"message": "این نام کاربری قبلا ثبت شده"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"message": "username is already exist"}, status=status.HTTP_406_NOT_ACCEPTABLE)
             user = User.objects.create_user(username=username, email=email, password=password)
 
             token = rand_ascii(100)
@@ -63,7 +63,7 @@ class SignUp(APIView):
             html_content = htmly.render(d)
             send_email.after_response("تایید ایمیل Amoot", html_content, [user.email])
 
-            return Response({"access": str(refresh.access_token), "refresh": str(refresh)}, status=status.HTTP_200_OK)
+            return Response({"message": f"user {username} created successfully", "detail": {"access_token": str(refresh.access_token), "refresh_token": str(refresh)}}, status=status.HTTP_200_OK)
 
         except Exception as e:
             print(e)
@@ -78,11 +78,11 @@ class CreateEmailToken(APIView):
             user = request.user
             account = Account.objects.get(user=user)
             if account.email_verified:
-                return Response({"message": "ایمیل شما قبلا تایید شده"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"message": "email is already verified"}, status=status.HTTP_208_ALREADY_REPORTED)
             if account.email_verify_generate_time and account.email_verify_generate_time + datetime.timedelta(minutes=2) > timezone.now():
-                return Response({"message": "شما هر دو دقیقه یکبار قادر به درخواست ایمیل تایید هستید.",
-                                 "detail": "لطفا کمی صبر کرده و مجددا امتحان نمایید."},
-                                status=status.HTTP_400_BAD_REQUEST)
+                return Response({"message": "you can ask for email confirm every two minutes",
+                                 "detail": "please wait and try later"},
+                                status=status.HTTP_429_TOO_MANY_REQUESTS)
             token = rand_ascii(100)
             account.email_verify_token = token
             account.email_verify_generate_time = timezone.now()
@@ -92,7 +92,7 @@ class CreateEmailToken(APIView):
             print(d)
             html_content = htmly.render(d)
             send_email.after_response("تایید ایمیل Amoot", html_content, [user.email])
-            return Response({"message": "لینک تایید ایمیل برای شما ارسال شد.", "detail": "بخش اسپم را درصورت عدم ارسال بررسی نمایید."})
+            return Response({"message": "confirm link was sent to your email", "detail": "please check your email"})
 
         except Exception as e:
             print(e)
@@ -107,7 +107,7 @@ class VerifyEmail(APIView):
             try:
                 account = Account.objects.get(user__id=userId, email_verify_token=token)
             except:
-                return Response({"message": "ایمیل مورد نظر یافت نشد", "detail": "ممکن است قبلا تایید شده باشد."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"message": "email not found", "detail": ""}, status=status.HTTP_404_NOT_FOUND)
             account.email_verified = True
             account.email_verify_token = None
             account.save()
@@ -125,10 +125,10 @@ class ForgetPassword(APIView):
                 user = User.objects.get(email=request.data.get("email"))
                 account = Account.objects.get(user=user)
             except:
-                return Response({"message": "ایمیل وارد شده وجود ندارد"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"message": "email not found"}, status=status.HTTP_404_NOT_FOUND)
 
             if account.reset_token_created_at and account.reset_token_created_at + datetime.timedelta(minutes=5) > timezone.now():
-                return Response({"message": "هر پنج دقیقه یکبار قادر به درخواست بازیابی رمز عبور هستید"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"message": "you can reset your password every five minutes", "detail": "please wait and try later"}, status=status.HTTP_429_TOO_MANY_REQUESTS)
 
             token = rand_ascii(100)
             account.reset_password_token = token
@@ -157,7 +157,7 @@ class SetPassword(APIView):
                 user = User.objects.get(id=userId)
                 account = Account.objects.get(reset_password_token=token, user=user)
             except:
-                return Response({"message": "لینک فراموشی رمز منقضی یا استفاده شده, لطفا مجددا درخواست لینک بازنشانی رمز کنید."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"message": "link was expired or used", "detail": "please try again"}, status=status.HTTP_400_BAD_REQUEST)
 
             user.set_password(newPass)
             account.reset_password_token = None
