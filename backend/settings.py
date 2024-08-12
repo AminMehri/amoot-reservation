@@ -41,8 +41,10 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'Account',
+    'Reservation',
     'rest_framework',
     'rest_framework_simplejwt',
+    'ckeditor',
     'after_response',
 ]
 
@@ -152,6 +154,9 @@ MEDIA_ROOT = os.path.join(BASE_DIR, '')
 
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+
+CKEDITOR_BASEPATH = "/static/ckeditor/ckeditor/"
+CKEDITOR_UPLOAD_PATH = "uploads/"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
