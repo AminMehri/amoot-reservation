@@ -16,6 +16,10 @@ class GetTicket(APIView):
         if not serializer.is_valid():
             return Response({"message": "invalid data", "detail": f"invalid date for: {' ,'.join(serializer.errors)}"}, status=status.HTTP_400_BAD_REQUEST)
         
+        patient_id = request.data.get("patient_id")
+        if not isinstance(patient_id, int):
+            return Response({"message": "patient id must be an integer"}, status=status.HTTP_400_BAD_REQUEST)
+        
         doctor_id = int(serializer.data.get('doctor_id'))
         patient_id = int(serializer.data.get('patient_id'))
 
