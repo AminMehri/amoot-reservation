@@ -26,7 +26,7 @@ A Simple Reservation System For Doctors And Patients.
     ```
 4. Go to the backend container:
   ```bash
-  docker exec -it backend-web-1
+  docker exec -it backend-web-1 bash
   ```
 5. Migrations and create super user:
    ```bash
