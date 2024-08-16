@@ -118,9 +118,9 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'amootdb',
-        'USER': 'amin',
-        'PASSWORD': 'amin',
-        'HOST': '127.0.0.1',
+        'USER': 'root',
+        'PASSWORD': '1322abcde',
+        'HOST': 'db',
         'PORT': '3306',
     }
 }

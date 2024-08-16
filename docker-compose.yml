@@ -1,0 +1,32 @@
+version: '3.3'
+services:
+  db:
+    image: mysql:latest
+    restart: always
+    environment:
+      MYSQL_DATABASE: 'amootdb'
+      MYSQL_USER: 'amin'
+      MYSQL_PASSWORD: 'amin'
+      MYSQL_ROOT_PASSWORD: '1322abcde'
+    ports:
+      - '3306:3306'
+    expose:
+      - '3306'
+    volumes:
+      - my-db:/var/lib/mysql
+
+  web:
+    build: .
+    command: >
+      sh -c "until nc -z db 3306; do
+      echo 'Waiting for the MySQL Server...'; sleep 5; done;
+      python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+
+volumes:
+  my-db:
